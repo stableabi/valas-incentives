@@ -4,6 +4,7 @@ import "./dependencies/SafeERC20.sol";
 import "./interfaces/IEarner.sol";
 import "./interfaces/IERC20.sol";
 import "./interfaces/ILpDepositor.sol";
+import "./interfaces/ILpToken.sol";
 import "./interfaces/IMasterChef.sol";
 
 contract Pool2Incentives is IERC20 {
@@ -69,12 +70,13 @@ contract Pool2Incentives is IERC20 {
             uint256[] memory a = IMasterChef(chef).claimableReward(earner, tokens);
             valas = a[0];
 
-            tokens[0] = lpToken;
+            address pool = ILpToken(lpToken).pool();
+            tokens[0] = pool;
             Amounts[] memory b = ILpDepositor(lpDepositor).claimable(earner, tokens);
             epx = b[0].epx;
             ddd = b[0].ddd;
 
-            extra = ILpDepositor(lpDepositor).claimableExtraRewards(earner, lpToken);
+            extra = ILpDepositor(lpDepositor).claimableExtraRewards(earner, pool);
         }
     }
 
