@@ -68,7 +68,7 @@ contract Pool2Incentives is IERC20 {
             address[] memory tokens = new address[](1);
             tokens[0] = address(this);
             uint256[] memory a = IMasterChef(chef).claimableReward(earner, tokens);
-            valas = a[0];
+            valas = a[0] + IMasterChef(chef).userBaseClaimable(earner);
 
             address pool = ILpToken(lpToken).pool();
             tokens[0] = pool;
