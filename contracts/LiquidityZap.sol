@@ -24,6 +24,8 @@ contract LiquidityZap {
         incentives = _incentives;
         IERC20(epsLpToken).approve(lpDepositor, type(uint256).max);
         IERC20(ddLpToken).approve(_incentives, type(uint256).max);
+        IERC20(wbnb).approve(epsPool, type(uint256).max);
+        IERC20(valas).approve(epsPool, type(uint256).max);
     }
 
     function _deposit(address _account, uint256 _amount) internal {
