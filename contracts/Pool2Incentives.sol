@@ -13,8 +13,8 @@ contract Pool2Incentives is IERC20 {
 
     address public constant chef = 0x3eB63cff72f8687f8DE64b2f0e40a5B95302D028;
     address public constant lpDepositor = 0x8189F0afdBf8fE6a9e13c69bA35528ac6abeB1af;
-    address public constant lpToken = 0xbFa075679a6c47D619269F854adD50C965d5cC64;
-    address public constant pool = 0x6B46dFaC1E46f059cea6C0a2D7642d58e8BE71F8;
+    address public constant ddlpToken = 0xbFa075679a6c47D619269F854adD50C965d5cC64;
+    address public constant epsLpToken = 0x6B46dFaC1E46f059cea6C0a2D7642d58e8BE71F8;
     address public constant locker = 0x51133C54b7bb6CC89DaC86B73c75B1bf98070e0d;
     address public constant voting = 0x5e4b853944f54C8Cb568b25d269Cd297B8cEE36d;
     address public immutable earnerImpl;
@@ -48,7 +48,7 @@ contract Pool2Incentives is IERC20 {
         balanceOf[earner] += _amount;
 
         IEarner(earner).deposit(_amount);
-        IERC20(lpToken).safeTransferFrom(msg.sender, earner, _amount);
+        IERC20(ddlpToken).safeTransferFrom(msg.sender, earner, _amount);
     }
 
     function withdraw(address _account, uint256 _amount) external {
@@ -62,7 +62,7 @@ contract Pool2Incentives is IERC20 {
         lpBalance[msg.sender] -= _amount;
         balanceOf[earner] -= _amount;
 
-        IERC20(lpToken).safeTransferFrom(earner, _account, _amount);
+        IERC20(ddlpToken).safeTransferFrom(earner, _account, _amount);
     }
 
     function claimable(address _account) external view returns (uint256 valas, uint256 epx, uint256 ddd, ExtraReward[] memory extra) {
@@ -73,12 +73,12 @@ contract Pool2Incentives is IERC20 {
             uint256[] memory a = IMasterChef(chef).claimableReward(earner, tokens);
             valas = a[0] + IMasterChef(chef).userBaseClaimable(earner);
 
-            tokens[0] = pool;
+            tokens[0] = epsLpToken;
             Amounts[] memory b = IDDLpDepositor(lpDepositor).claimable(earner, tokens);
             epx = b[0].epx;
             ddd = b[0].ddd;
 
-            extra = IDDLpDepositor(lpDepositor).claimableExtraRewards(earner, pool);
+            extra = IDDLpDepositor(lpDepositor).claimableExtraRewards(earner, epsLpToken);
         }
     }
 
@@ -119,7 +119,7 @@ contract Pool2Incentives is IERC20 {
 
     function vote(uint256 _amount) external {
         address[] memory tokens = new address[](1);
-        tokens[0] = pool;
+        tokens[0] = epsLpToken;
         uint256[] memory votes = new uint256[](1);
         votes[0] = _amount;
         IDDVoting(voting).vote(tokens, votes);
