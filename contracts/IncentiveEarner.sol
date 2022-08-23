@@ -2,9 +2,9 @@ pragma solidity 0.8.12;
 
 import "./dependencies/SafeERC20.sol";
 import "./interfaces/IDDLocker.sol";
+import "./interfaces/IDDLpDepositor.sol";
 import "./interfaces/IEarner.sol";
 import "./interfaces/IERC20.sol";
-import "./interfaces/ILpDepositor.sol";
 import "./interfaces/IMasterChef.sol";
 
 contract IncentiveEarner is IEarner {
@@ -48,7 +48,7 @@ contract IncentiveEarner is IEarner {
         require(msg.sender == incentives);
         address[] memory tokens = new address[](1);
         tokens[0] = pool;
-        ILpDepositor(lpDepositor).claim(address(this), tokens, _maxBondAmount);
+        IDDLpDepositor(lpDepositor).claim(address(this), tokens, _maxBondAmount);
         uint256 amount = IERC20(epx).balanceOf(address(this));
         if (amount > 0) {
             IERC20(epx).safeTransfer(owner, amount);
@@ -62,6 +62,6 @@ contract IncentiveEarner is IEarner {
 
     function claim_extra() external override {
         require(msg.sender == incentives);
-        ILpDepositor(lpDepositor).claimExtraRewards(owner, pool);
+        IDDLpDepositor(lpDepositor).claimExtraRewards(owner, pool);
     }
 }

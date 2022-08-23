@@ -10,7 +10,7 @@ struct ExtraReward {
     uint256 amount;
 }
 
-interface ILpDepositor {
+interface IDDLpDepositor {
     function claimable(address _user, address[] calldata _tokens) external view returns (Amounts[] memory);
     function claimableExtraRewards(address user, address pool) external view returns (ExtraReward[] memory);
     function claim(address _receiver, address[] calldata _tokens, uint256 _maxBondAmount) external;

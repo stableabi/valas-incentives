@@ -2,10 +2,10 @@ pragma solidity 0.8.12;
 
 import "./dependencies/SafeERC20.sol";
 import "./interfaces/IDDLocker.sol";
+import "./interfaces/IDDLpDepositor.sol";
 import "./interfaces/IDDVoting.sol";
 import "./interfaces/IEarner.sol";
 import "./interfaces/IERC20.sol";
-import "./interfaces/ILpDepositor.sol";
 import "./interfaces/IMasterChef.sol";
 
 contract Pool2Incentives is IERC20 {
@@ -74,11 +74,11 @@ contract Pool2Incentives is IERC20 {
             valas = a[0] + IMasterChef(chef).userBaseClaimable(earner);
 
             tokens[0] = pool;
-            Amounts[] memory b = ILpDepositor(lpDepositor).claimable(earner, tokens);
+            Amounts[] memory b = IDDLpDepositor(lpDepositor).claimable(earner, tokens);
             epx = b[0].epx;
             ddd = b[0].ddd;
 
-            extra = ILpDepositor(lpDepositor).claimableExtraRewards(earner, pool);
+            extra = IDDLpDepositor(lpDepositor).claimableExtraRewards(earner, pool);
         }
     }
 
