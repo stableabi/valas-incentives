@@ -54,11 +54,17 @@ def test_deposit(acc, incentives, dd_lp, chef):
     assert dd_lp.balanceOf(acc) == LP_AMOUNT
     dd_lp.approve(incentives, 2**256-1, {'from': acc})
     assert incentives.earners(acc) == ZERO_ADDRESS
+    assert incentives.lpBalance(acc) == 0
+    assert incentives.totalSupply() == 0
     incentives.deposit(acc, LP_AMOUNT, {'from': acc})
 
     assert dd_lp.balanceOf(acc) == 0
     earner = incentives.earners(acc)
     assert earner != ZERO_ADDRESS
+    assert dd_lp.balanceOf(earner) == LP_AMOUNT
+    assert incentives.lpBalance(acc) == LP_AMOUNT
+    assert incentives.balanceOf(chef) == LP_AMOUNT
+    assert incentives.totalSupply() == LP_AMOUNT
     earner = IncentiveEarner.at(earner)
     assert earner.owner() == acc.address
     assert chef.userInfo(incentives, earner)[0] == LP_AMOUNT
@@ -148,4 +154,8 @@ def test_withdraw(acc, incentives, dd_lp, chef):
     incentives.withdraw(acc, LP_AMOUNT, {'from': acc})
     earner = IncentiveEarner.at(incentives.earners(acc))
     assert dd_lp.balanceOf(acc) == LP_AMOUNT
+    assert dd_lp.balanceOf(earner) == 0
+    assert incentives.lpBalance(acc) == 0
+    assert incentives.balanceOf(chef) == 0
+    assert incentives.totalSupply() == 0
     assert chef.userInfo(incentives, earner)[0] == 0
