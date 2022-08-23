@@ -51,7 +51,7 @@ contract Pool2Incentives is IERC20 {
         IERC20(ddlpToken).safeTransferFrom(msg.sender, earner, _amount);
     }
 
-    function withdraw(address _account, uint256 _amount) external {
+    function _withdraw(address _account, uint256 _amount) internal {
         address earner = earners[msg.sender];
         require(earner != address(0));
 
@@ -63,6 +63,15 @@ contract Pool2Incentives is IERC20 {
         balanceOf[earner] -= _amount;
 
         IERC20(ddlpToken).safeTransferFrom(earner, _account, _amount);
+    }
+
+    function withdraw(address _account, uint256 _amount) external {
+        _withdraw(_account, _amount);
+    }
+
+    function withdraw_eps(address _account, uint256 _amount) external {
+        _withdraw(address(this), _amount);
+        IDDLpDepositor(lpDepositor).withdraw(_account, epsLpToken, _amount);
     }
 
     function claimable(address _account) external view returns (uint256 valas, uint256 epx, uint256 ddd, ExtraReward[] memory extra) {

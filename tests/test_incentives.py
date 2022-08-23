@@ -159,3 +159,17 @@ def test_withdraw(acc, incentives, dd_lp, chef):
     assert incentives.balanceOf(chef) == 0
     assert incentives.totalSupply() == 0
     assert chef.userInfo(incentives, earner)[0] == 0
+
+def test_withdraw_eps(acc, incentives, eps_lp, dd_lp, chef):
+    dd_lp.approve(incentives, 2**256-1, {'from': acc})
+    incentives.deposit(acc, LP_AMOUNT, {'from': acc})
+
+    incentives.withdraw_eps(acc, LP_AMOUNT, {'from': acc})
+    earner = IncentiveEarner.at(incentives.earners(acc))
+    assert dd_lp.balanceOf(acc) == 0
+    assert dd_lp.balanceOf(earner) == 0
+    assert eps_lp.balanceOf(acc) == LP_AMOUNT
+    assert incentives.lpBalance(acc) == 0
+    assert incentives.balanceOf(chef) == 0
+    assert incentives.totalSupply() == 0
+    assert chef.userInfo(incentives, earner)[0] == 0
