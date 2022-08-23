@@ -1,4 +1,4 @@
-from brownie import accounts, chain, Contract, IncentiveEarner, Pool2Incentives, ZERO_ADDRESS
+from brownie import accounts, chain, Contract, IncentiveEarner, LiquidityZap, Pool2Incentives, ZERO_ADDRESS
 import pytest
 
 EPS_LP = '0x6B46dFaC1E46f059cea6C0a2D7642d58e8BE71F8'
@@ -12,11 +12,15 @@ EPX = '0xAf41054C1487b0e5E2B9250C0332eCBCe6CE9d71'
 DDD = '0x84c97300a190676a19D1E13115629A11f8482Bd1'
 LP_AMOUNT = 10_000_000_000_000_000_000_000
 
-@pytest.fixture
-def deployer():
+@pytest.fixture(scope="function", autouse=True)
+def setup():
     chain.reset()
     chain.sleep(7*24*3600)
     chain.mine()
+    pass
+
+@pytest.fixture
+def deployer():
     return accounts[0]
 
 @pytest.fixture
@@ -49,6 +53,11 @@ def dd_lp(acc, eps_lp):
     depositor.deposit(acc, EPS_LP, LP_AMOUNT, {'from': acc})
     dd_lp = Contract(DD_LP)
     return dd_lp
+
+@pytest.fixture
+def zap(deployer, incentives):
+    zap = LiquidityZap.deploy(incentives, {'from': deployer})
+    return zap
 
 def test_deposit(acc, incentives, dd_lp, chef):
     assert dd_lp.balanceOf(acc) == LP_AMOUNT
@@ -173,3 +182,32 @@ def test_withdraw_eps(acc, incentives, eps_lp, dd_lp, chef):
     assert incentives.balanceOf(chef) == 0
     assert incentives.totalSupply() == 0
     assert chef.userInfo(incentives, earner)[0] == 0
+
+def test_zap_deposit(acc, eps_lp, incentives, zap):
+    eps_lp.approve(zap, 2**256-1, {'from': acc})
+    assert incentives.lpBalance(acc) == 0
+    zap.deposit(acc, LP_AMOUNT, {'from': acc})
+    assert incentives.lpBalance(acc) == LP_AMOUNT
+
+def test_zap_migrate(acc, incentives, zap):
+    valas = Contract(zap.valas())
+    wbnb = Contract(zap.wbnb())
+    cake_lp = Contract(zap.cakeLpToken())
+
+    valas_minter = accounts.at(valas.minter(), True)
+    valas_amt = int(1e24)
+    valas.mint(acc, valas_amt, {'from': valas_minter})
+    valas.transfer(cake_lp, valas_amt, {'from': acc})
+    
+    reserves = cake_lp.getReserves()
+    bnb_amt = int(reserves[1]*valas_amt//reserves[0])
+    wbnb.deposit({'from': acc, 'value': bnb_amt})
+    wbnb.transfer(cake_lp, bnb_amt, {'from': acc})
+
+    cake_lp.mint(acc, {'from': acc})
+    cake_lp_amt = cake_lp.balanceOf(acc)
+    cake_lp.approve(zap, 2**256-1, {'from': acc})
+
+    assert incentives.lpBalance(acc) == 0
+    zap.migrate(acc, cake_lp_amt, valas_amt*99//100, bnb_amt*99//100, 0, chain.time() + 60, {'from': acc})
+    assert incentives.lpBalance(acc) > 0
