@@ -17,7 +17,6 @@ def setup():
     chain.reset()
     chain.sleep(7*24*3600)
     chain.mine()
-    pass
 
 @pytest.fixture
 def deployer():
