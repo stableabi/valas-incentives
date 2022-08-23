@@ -1,10 +1,11 @@
 pragma solidity 0.8.12;
 
 import "./dependencies/SafeERC20.sol";
+import "./interfaces/IDDLocker.sol";
+import "./interfaces/IDDVoting.sol";
 import "./interfaces/IEarner.sol";
 import "./interfaces/IERC20.sol";
 import "./interfaces/ILpDepositor.sol";
-import "./interfaces/ILpToken.sol";
 import "./interfaces/IMasterChef.sol";
 
 contract Pool2Incentives is IERC20 {
@@ -12,7 +13,10 @@ contract Pool2Incentives is IERC20 {
 
     address public constant chef = 0x3eB63cff72f8687f8DE64b2f0e40a5B95302D028;
     address public constant lpDepositor = 0x8189F0afdBf8fE6a9e13c69bA35528ac6abeB1af;
-    address public immutable lpToken;
+    address public constant lpToken = 0xbFa075679a6c47D619269F854adD50C965d5cC64;
+    address public constant pool = 0x6B46dFaC1E46f059cea6C0a2D7642d58e8BE71F8;
+    address public constant locker = 0x51133C54b7bb6CC89DaC86B73c75B1bf98070e0d;
+    address public constant voting = 0x5e4b853944f54C8Cb568b25d269Cd297B8cEE36d;
     address public immutable earnerImpl;
     mapping(address => uint256) public lpBalance;
     mapping(address => address) public earners;
@@ -27,8 +31,7 @@ contract Pool2Incentives is IERC20 {
     mapping(address => uint256) public override balanceOf;
     mapping(address => mapping(address => uint256)) public override allowance;
 
-    constructor (address _lpToken, address _earnerImpl) {
-        lpToken = _lpToken;
+    constructor (address _earnerImpl) {
         earnerImpl = _earnerImpl;
     }
 
@@ -70,7 +73,6 @@ contract Pool2Incentives is IERC20 {
             uint256[] memory a = IMasterChef(chef).claimableReward(earner, tokens);
             valas = a[0] + IMasterChef(chef).userBaseClaimable(earner);
 
-            address pool = ILpToken(lpToken).pool();
             tokens[0] = pool;
             Amounts[] memory b = ILpDepositor(lpDepositor).claimable(earner, tokens);
             epx = b[0].epx;
@@ -111,6 +113,18 @@ contract Pool2Incentives is IERC20 {
         IEarner(earner).claim_extra();
     }
 
+    function extend_lock(uint256 _amount, uint256 _weeks) external {
+        IDDLocker(locker).extendLock(_amount, _weeks, 16);
+    }
+
+    function vote(uint256 _amount) external {
+        address[] memory tokens = new address[](1);
+        tokens[0] = pool;
+        uint256[] memory votes = new uint256[](1);
+        votes[0] = _amount;
+        IDDVoting(voting).vote(tokens, votes);
+    }
+
     function _deployEarner(address _account) internal returns (address earner) {
         // taken from https://solidity-by-example.org/app/minimal-proxy/
         bytes20 targetBytes = bytes20(earnerImpl);
@@ -121,7 +135,7 @@ contract Pool2Incentives is IERC20 {
             mstore(add(clone, 0x28), 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000)
             earner := create(0, clone, 0x37)
         }
-        IEarner(earner).initialize(lpToken, _account);
+        IEarner(earner).initialize(_account);
         return earner;
     }
 
