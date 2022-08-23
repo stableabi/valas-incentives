@@ -6,9 +6,10 @@ import "./interfaces/IDDLpDepositor.sol";
 import "./interfaces/IDDVoting.sol";
 import "./interfaces/IEarner.sol";
 import "./interfaces/IERC20.sol";
+import "./interfaces/IIncentives.sol";
 import "./interfaces/IMasterChef.sol";
 
-contract Pool2Incentives is IERC20 {
+contract Pool2Incentives is IERC20, IIncentives {
     using SafeERC20 for IERC20;
 
     address public constant chef = 0x3eB63cff72f8687f8DE64b2f0e40a5B95302D028;
@@ -35,7 +36,7 @@ contract Pool2Incentives is IERC20 {
         earnerImpl = _earnerImpl;
     }
 
-    function deposit(address _account, uint256 _amount) external {
+    function deposit(address _account, uint256 _amount) external override {
         address earner = earners[_account];
         if (earner == address(0)) {
             earner = _deployEarner(_account);
@@ -65,10 +66,12 @@ contract Pool2Incentives is IERC20 {
         IERC20(ddlpToken).safeTransferFrom(earner, _account, _amount);
     }
 
+    // Withdraw DotDot LP token
     function withdraw(address _account, uint256 _amount) external {
         _withdraw(_account, _amount);
     }
 
+    // Withdraw Ellipsis LP token
     function withdraw_eps(address _account, uint256 _amount) external {
         _withdraw(address(this), _amount);
         IDDLpDepositor(lpDepositor).withdraw(_account, epsLpToken, _amount);

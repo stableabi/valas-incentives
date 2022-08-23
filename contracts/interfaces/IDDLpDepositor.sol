@@ -11,6 +11,8 @@ struct ExtraReward {
 }
 
 interface IDDLpDepositor {
+    function deposit(address _user, address _token, uint256 _amount) external;
+    function withdraw(address _receiver, address _token, uint256 _amount) external;
     function claimable(address _user, address[] calldata _tokens) external view returns (Amounts[] memory);
     function claimableExtraRewards(address user, address pool) external view returns (ExtraReward[] memory);
     function claim(address _receiver, address[] calldata _tokens, uint256 _maxBondAmount) external;
