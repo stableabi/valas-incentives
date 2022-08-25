@@ -16,6 +16,7 @@ contract Pool2Incentives is IERC20, IIncentives {
     address public constant lpDepositor = 0x8189F0afdBf8fE6a9e13c69bA35528ac6abeB1af;
     address public constant ddlpToken = 0xbFa075679a6c47D619269F854adD50C965d5cC64;
     address public constant epsLpToken = 0x6B46dFaC1E46f059cea6C0a2D7642d58e8BE71F8;
+    address public constant ddd = 0x84c97300a190676a19D1E13115629A11f8482Bd1;
     address public constant locker = 0x51133C54b7bb6CC89DaC86B73c75B1bf98070e0d;
     address public constant voting = 0x5e4b853944f54C8Cb568b25d269Cd297B8cEE36d;
     address public immutable earnerImpl;
@@ -34,6 +35,7 @@ contract Pool2Incentives is IERC20, IIncentives {
 
     constructor (address _earnerImpl) {
         earnerImpl = _earnerImpl;
+        IERC20(ddd).approve(locker, type(uint256).max);
     }
 
     function deposit(address _account, uint256 _amount) external override {
@@ -115,7 +117,13 @@ contract Pool2Incentives is IERC20, IIncentives {
         address earner = earners[msg.sender];
         require(earner != address(0));
 
+        uint256 amount = IERC20(ddd).balanceOf(msg.sender);
         IEarner(earner).claim_dotdot(_maxBondAmount);
+        amount = (IERC20(ddd).balanceOf(msg.sender) - amount) / 10;
+        if (amount > 0) {
+            IERC20(ddd).safeTransferFrom(msg.sender, address(this), amount);
+            IDDLocker(locker).lock(address(this), amount, 16);
+        }
     }
 
     function claim_extra() public {

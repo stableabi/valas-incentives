@@ -114,7 +114,7 @@ def test_claim_dd(acc, incentives, dd_lp):
     # Claim EPX and DDD rewards
     epx = Contract(EPX)
     ddd = Contract(DDD)
-    ddd.approve(earner, 2**256-1, {'from': acc})
+    ddd.approve(incentives, 2**256-1, {'from': acc})
     locker = Contract(DD_LOCKER)
     bonding = Contract(BONDING)
     assert epx.balanceOf(acc) == 0 and bonding.bondedBalance(acc) == 0 and ddd.balanceOf(acc) == 0
@@ -137,7 +137,7 @@ def test_claim_dd_bond(acc, incentives, dd_lp):
     # Claim dEPX and DDD rewards
     epx = Contract(EPX)
     ddd = Contract(DDD)
-    ddd.approve(earner, 2**256-1, {'from': acc})
+    ddd.approve(incentives, 2**256-1, {'from': acc})
     bonding = Contract(BONDING)
     assert epx.balanceOf(acc) == 0 and bonding.bondedBalance(acc) == 0 and ddd.balanceOf(acc) == 0
     incentives.claim_dotdot(2**256 - 1, {'from': acc})
@@ -153,7 +153,7 @@ def test_vote(acc, incentives, dd_lp):
 
     day = 24*3600
     week = 7*day
-    Contract(DDD).approve(incentives.earners(acc), 2**256-1, {'from': acc})
+    Contract(DDD).approve(incentives, 2**256-1, {'from': acc})
     incentives.claim_dotdot(0, {'from': acc})
     t = (chain.time()//week + 1)*week + 5*day
     chain.mine(timestamp=t)
