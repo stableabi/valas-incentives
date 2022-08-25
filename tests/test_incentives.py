@@ -124,7 +124,7 @@ def test_claim_dd(acc, incentives, dd_lp):
     assert epx.balanceOf(earner) == 0 and bonding.bondedBalance(earner) == 0 and ddd.balanceOf(earner) == 0
     locks = locker.getActiveUserLocks(incentives)
     assert len(locks) == 1
-    assert locks[0][0] == 16
+    assert locks[0][0] == 16 and locks[0][1] > 0
 
 def test_claim_dd_bond(acc, incentives, dd_lp):
     dd_lp.approve(incentives, 2**256-1, {'from': acc})
@@ -162,7 +162,6 @@ def test_vote(acc, incentives, dd_lp):
     assert locks[0][0] < 16
     incentives.extend_lock(locks[0][1], locks[0][0], {'from': acc})
     locks = locker.getActiveUserLocks(incentives)
-    assert len(locks) == 1
     assert locks[0][0] == 16
 
     voting = Contract(DD_VOTING)
