@@ -10,13 +10,12 @@ DD_LOCKER = '0x51133C54b7bb6CC89DaC86B73c75B1bf98070e0d'
 DD_VOTING = '0x5e4b853944f54C8Cb568b25d269Cd297B8cEE36d'
 EPX = '0xAf41054C1487b0e5E2B9250C0332eCBCe6CE9d71'
 DDD = '0x84c97300a190676a19D1E13115629A11f8482Bd1'
+BONDING = '0xd4F7b4BC46e6e499D35335D270fd094979D815A0'
 LP_AMOUNT = 10_000_000_000_000_000_000_000
 
 @pytest.fixture(scope="function", autouse=True)
 def setup():
     chain.reset()
-    chain.sleep(7*24*3600)
-    chain.mine()
 
 @pytest.fixture
 def deployer():
@@ -107,6 +106,7 @@ def test_claim_valas(acc, incentives, dd_lp):
 def test_claim_dd(acc, incentives, dd_lp):
     dd_lp.approve(incentives, 2**256-1, {'from': acc})
     incentives.deposit(acc, LP_AMOUNT, {'from': acc})
+    earner = incentives.earners(acc)
 
     chain.sleep(3600)
     chain.mine()
@@ -114,16 +114,35 @@ def test_claim_dd(acc, incentives, dd_lp):
     # Claim EPX and DDD rewards
     epx = Contract(EPX)
     ddd = Contract(DDD)
+    ddd.approve(earner, 2**256-1, {'from': acc})
     locker = Contract(DD_LOCKER)
-    assert epx.balanceOf(acc) == 0
-    assert ddd.balanceOf(acc) == 0
+    bonding = Contract(BONDING)
+    assert epx.balanceOf(acc) == 0 and bonding.bondedBalance(acc) == 0 and ddd.balanceOf(acc) == 0
     assert len(locker.getActiveUserLocks(incentives)) == 0
     incentives.claim_dotdot(0, {'from': acc})
-    assert epx.balanceOf(acc) > 0
-    assert ddd.balanceOf(acc) > 0
+    assert epx.balanceOf(acc) > 0 and bonding.bondedBalance(acc) == 0 and ddd.balanceOf(acc) > 0
+    assert epx.balanceOf(earner) == 0 and bonding.bondedBalance(earner) == 0 and ddd.balanceOf(earner) == 0
     locks = locker.getActiveUserLocks(incentives)
     assert len(locks) == 1
     assert locks[0][0] == 16
+
+def test_claim_dd_bond(acc, incentives, dd_lp):
+    dd_lp.approve(incentives, 2**256-1, {'from': acc})
+    incentives.deposit(acc, LP_AMOUNT, {'from': acc})
+    earner = incentives.earners(acc)
+
+    chain.sleep(3600)
+    chain.mine()
+
+    # Claim dEPX and DDD rewards
+    epx = Contract(EPX)
+    ddd = Contract(DDD)
+    ddd.approve(earner, 2**256-1, {'from': acc})
+    bonding = Contract(BONDING)
+    assert epx.balanceOf(acc) == 0 and bonding.bondedBalance(acc) == 0 and ddd.balanceOf(acc) == 0
+    incentives.claim_dotdot(2**256 - 1, {'from': acc})
+    assert epx.balanceOf(acc) == 0 and bonding.bondedBalance(acc) > 0 and ddd.balanceOf(acc) > 0
+    assert epx.balanceOf(earner) == 0 and bonding.bondedBalance(earner) == 0 and ddd.balanceOf(earner) == 0
 
 def test_vote(acc, incentives, dd_lp):
     dd_lp.approve(incentives, 2**256-1, {'from': acc})
@@ -134,12 +153,13 @@ def test_vote(acc, incentives, dd_lp):
 
     day = 24*3600
     week = 7*day
+    Contract(DDD).approve(incentives.earners(acc), 2**256-1, {'from': acc})
     incentives.claim_dotdot(0, {'from': acc})
     t = (chain.time()//week + 1)*week + 5*day
     chain.mine(timestamp=t)
     locker = Contract(DD_LOCKER)
     locks = locker.getActiveUserLocks(incentives)
-    assert locks[0][0] == 15
+    assert locks[0][0] < 16
     incentives.extend_lock(locks[0][1], locks[0][0], {'from': acc})
     locks = locker.getActiveUserLocks(incentives)
     assert len(locks) == 1

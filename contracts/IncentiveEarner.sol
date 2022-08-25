@@ -16,7 +16,6 @@ contract IncentiveEarner is IEarner {
     address public constant lpDepositor = 0x8189F0afdBf8fE6a9e13c69bA35528ac6abeB1af;
     address public constant ddLpToken = 0xbFa075679a6c47D619269F854adD50C965d5cC64;
     address public constant epsLpToken = 0x6B46dFaC1E46f059cea6C0a2D7642d58e8BE71F8;
-    address public constant epx = 0xAf41054C1487b0e5E2B9250C0332eCBCe6CE9d71;
     address public constant ddd = 0x84c97300a190676a19D1E13115629A11f8482Bd1;
     address public constant locker = 0x51133C54b7bb6CC89DaC86B73c75B1bf98070e0d;
 
@@ -48,15 +47,13 @@ contract IncentiveEarner is IEarner {
         require(msg.sender == incentives);
         address[] memory tokens = new address[](1);
         tokens[0] = epsLpToken;
-        IDDLpDepositor(lpDepositor).claim(address(this), tokens, _maxBondAmount);
-        uint256 amount = IERC20(epx).balanceOf(address(this));
+        uint256 amount = IERC20(ddd).balanceOf(owner);
+        IDDLpDepositor(lpDepositor).claim(owner, tokens, _maxBondAmount);
+        amount = (IERC20(ddd).balanceOf(owner) - amount) / 10;
+
         if (amount > 0) {
-            IERC20(epx).safeTransfer(owner, amount);
-        }
-        amount = IERC20(ddd).balanceOf(address(this));
-        if (amount > 0) {
-            IDDLocker(locker).lock(incentives, amount/10, 16);
-            IERC20(ddd).safeTransfer(owner, amount - amount/10);
+            IERC20(ddd).safeTransferFrom(owner, address(this), amount);
+            IDDLocker(locker).lock(incentives, amount, 16);
         }
     }
 
