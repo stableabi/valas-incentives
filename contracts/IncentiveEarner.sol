@@ -1,14 +1,11 @@
 pragma solidity 0.8.12;
 
-import "./dependencies/SafeERC20.sol";
 import "./interfaces/IDDLpDepositor.sol";
 import "./interfaces/IEarner.sol";
 import "./interfaces/IERC20.sol";
 import "./interfaces/IMasterChef.sol";
 
 contract IncentiveEarner is IEarner {
-    using SafeERC20 for IERC20;
-
     address public incentives;
     address public owner;
     address public constant chef = 0x3eB63cff72f8687f8DE64b2f0e40a5B95302D028;
